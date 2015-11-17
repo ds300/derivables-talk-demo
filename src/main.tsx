@@ -8,7 +8,7 @@ import {
   px
 } from './utils'
 
-import { atom, transaction } from 'derivable'
+import { atom, transaction, derivation } from 'derivable'
 
 const $WindowWidth = atom(window.innerWidth);
 const $WindowHeight = atom(window.innerHeight);
@@ -25,6 +25,10 @@ window.addEventListener('mousemove', e => {
 // the logical index of the leftmost column on screen
 const $ColumnOffset = atom(0)
 
+// the total number of columns in our spreadsheet.
+// need to know to make slider size proportional
+const $TotalColumns = atom(20);
+
 const header = <div className='header'></div>;
 const slider = <div className='slider'></div>;
 
@@ -35,6 +39,29 @@ const SLIDER_BREADTH = 10;
 // number of columns which can be (fully) shown on page
 const $numColumns = $WindowWidth.derive(divide, CELL_WIDTH)
                                 .derive(Math.floor);
+
+// need to scale up from column units to pixels
+const $scale = $WindowWidth.derive(divide, $TotalColumns);
+
+const $sliderLength = $numColumns.derive(mul, $scale)
+                                 .derive(Math.round);
+// left means 'leftmost point', x position, etc.
+const $sliderLeft = $ColumnOffset.derive(mul, $scale)
+                                 .derive(Math.round);
+
+const $sliderTop = $WindowHeight.derive(sub, SLIDER_BREADTH);
+
+const $sliderStyle = derivation(() => {
+  return {
+    height: px(SLIDER_BREADTH),
+    width: px($sliderLength.get()),
+    top: px($sliderTop.get()),
+    left: px($sliderLeft.get())
+  }
+});
+
+$sliderStyle.react(style => assign(slider.style, style));
+
 
 // create a cell for a particular index in [0..numColumns]
 function makeCell (index) {
@@ -93,5 +120,7 @@ window.addEventListener('keydown', e => {
   switch (e.keyCode) {
     case 39: $ColumnOffset.swap(add, 1); break;
     case 37: $ColumnOffset.swap(sub, 1); break;
+    case 38: $TotalColumns.swap(add, 1); break;
+    case 40: $TotalColumns.swap(sub, 1); break;
   }
 })

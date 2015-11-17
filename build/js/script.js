@@ -1205,6 +1205,7 @@ window.addEventListener('mousemove', function (e) {
     $MouseX.set(e.pageX);
 });
 var $ColumnOffset = derivable_1.atom(0);
+var $TotalColumns = derivable_1.atom(20);
 var header = utils_1.React.createElement("div", {"className": 'header'});
 var slider = utils_1.React.createElement("div", {"className": 'slider'});
 var CELL_WIDTH = 100;
@@ -1212,6 +1213,21 @@ var CELL_HEIGHT = 20;
 var SLIDER_BREADTH = 10;
 var $numColumns = $WindowWidth.derive(utils_1.divide, CELL_WIDTH)
     .derive(Math.floor);
+var $scale = $WindowWidth.derive(utils_1.divide, $TotalColumns);
+var $sliderLength = $numColumns.derive(utils_1.mul, $scale)
+    .derive(Math.round);
+var $sliderLeft = $ColumnOffset.derive(utils_1.mul, $scale)
+    .derive(Math.round);
+var $sliderTop = $WindowHeight.derive(utils_1.sub, SLIDER_BREADTH);
+var $sliderStyle = derivable_1.derivation(function () {
+    return {
+        height: utils_1.px(SLIDER_BREADTH),
+        width: utils_1.px($sliderLength.get()),
+        top: utils_1.px($sliderTop.get()),
+        left: utils_1.px($sliderLeft.get())
+    };
+});
+$sliderStyle.react(function (style) { return utils_1.assign(slider.style, style); });
 function makeCell(index) {
     var cell = utils_1.React.createElement("div", {"className": 'header-cell'});
     utils_1.assign(cell.style, {
@@ -1251,6 +1267,12 @@ window.addEventListener('keydown', function (e) {
             break;
         case 37:
             $ColumnOffset.swap(utils_1.sub, 1);
+            break;
+        case 38:
+            $TotalColumns.swap(utils_1.add, 1);
+            break;
+        case 40:
+            $TotalColumns.swap(utils_1.sub, 1);
             break;
     }
 });
