@@ -1209,6 +1209,31 @@ var slider = utils_1.React.createElement("div", {"className": 'slider'});
 var CELL_WIDTH = 100;
 var CELL_HEIGHT = 20;
 var SLIDER_BREADTH = 10;
+var $numColumns = $WindowWidth.derive(utils_1.divide, CELL_WIDTH)
+    .derive(Math.floor);
+function makeCell(index) {
+    var cell = utils_1.React.createElement("div", {"className": 'header-cell'}, index);
+    utils_1.assign(cell.style, {
+        width: utils_1.px(CELL_WIDTH),
+        height: utils_1.px(CELL_HEIGHT),
+        left: utils_1.px(index * CELL_WIDTH),
+        top: utils_1.px(0)
+    });
+    return cell;
+}
+$numColumns.react(function (n) {
+    var cells = header.children, len = cells.length;
+    if (len < n) {
+        for (var i = len; i < n; i++) {
+            header.appendChild(makeCell(i));
+        }
+    }
+    else if (len > n) {
+        for (var i = len; i > n; i--) {
+            cells[i - 1].remove();
+        }
+    }
+});
 window.addEventListener('load', function () {
     document.body.appendChild(header);
     document.body.appendChild(slider);
