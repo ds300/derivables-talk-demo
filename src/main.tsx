@@ -29,6 +29,10 @@ const $ColumnOffset = atom(0)
 // need to know to make slider size proportional
 const $TotalColumns = atom(20);
 
+// Nested derivable to represent the left position
+// of the slider during a drag
+const $$DragLeft = atom(null);
+
 const header = <div className='header'></div>;
 const slider = <div className='slider'></div>;
 
@@ -46,8 +50,16 @@ const $scale = $WindowWidth.derive(divide, $TotalColumns);
 const $sliderLength = $numColumns.derive(mul, $scale)
                                  .derive(Math.round);
 // left means 'leftmost point', x position, etc.
-const $sliderLeft = $ColumnOffset.derive(mul, $scale)
-                                 .derive(Math.round);
+const $noDragSliderLeft = $ColumnOffset.derive(mul, $scale)
+                                       .derive(Math.round);
+// just unpack the nexted derivable to get at the number
+// number inside.
+const $dragSliderLeft = $$DragLeft.mDerive($left => $left.get());
+// mDerive means 'derive if not null'
+// like .? operator in c# or coffeescript
+const $sliderLeft = $dragSliderLeft.mOr($noDragSliderLeft);
+// mOr means 'if the thing on the left is null, use
+// the thing on the right'
 
 const $sliderTop = $WindowHeight.derive(sub, SLIDER_BREADTH);
 
@@ -107,7 +119,27 @@ $numColumns.react(n => {
 });
 
 
+slider.addEventListener('mousedown', e => {
+  // it's not until this event happens and the drag
+  // begins that that $$DragLeft piece of global state
+  // makes any sense. So this is where it gets set.
 
+  // $dragX is the offset of the mouse's "current" position
+  // relative to its actual current position right now (at the
+  // start of the drag). positive for right, negative for left
+  const $dragX = $MouseX.derive(sub, e.pageX);
+  // $dragLeft is that number added to the actual
+  // current left pos of the slider (at the start of the drag)
+  // that gives us the "current" derivable left pos of the
+  // slider
+  const $dragLeft = $dragX.derive(add, $sliderLeft.get());
+
+  $$DragLeft.set($dragLeft);
+});
+
+window.addEventListener('mouseup', () => {
+  $$DragLeft.set(null);
+});
 
 window.addEventListener('load', () => {
   document.body.appendChild(header)

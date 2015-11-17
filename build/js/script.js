@@ -1206,6 +1206,7 @@ window.addEventListener('mousemove', function (e) {
 });
 var $ColumnOffset = derivable_1.atom(0);
 var $TotalColumns = derivable_1.atom(20);
+var $$DragLeft = derivable_1.atom(null);
 var header = utils_1.React.createElement("div", {"className": 'header'});
 var slider = utils_1.React.createElement("div", {"className": 'slider'});
 var CELL_WIDTH = 100;
@@ -1216,8 +1217,10 @@ var $numColumns = $WindowWidth.derive(utils_1.divide, CELL_WIDTH)
 var $scale = $WindowWidth.derive(utils_1.divide, $TotalColumns);
 var $sliderLength = $numColumns.derive(utils_1.mul, $scale)
     .derive(Math.round);
-var $sliderLeft = $ColumnOffset.derive(utils_1.mul, $scale)
+var $noDragSliderLeft = $ColumnOffset.derive(utils_1.mul, $scale)
     .derive(Math.round);
+var $dragSliderLeft = $$DragLeft.mDerive(function ($left) { return $left.get(); });
+var $sliderLeft = $dragSliderLeft.mOr($noDragSliderLeft);
 var $sliderTop = $WindowHeight.derive(utils_1.sub, SLIDER_BREADTH);
 var $sliderStyle = derivable_1.derivation(function () {
     return {
@@ -1254,6 +1257,17 @@ $numColumns.react(function (n) {
             header.appendChild(makeCell(i));
         }
     }
+});
+slider.addEventListener('mousedown', function (e) {
+    // it's not until this event happens and the drag
+    // begins that that $$DragLeft piece of global state
+    // makes any sense. So this is where it gets set.
+    var $dragX = $MouseX.derive(utils_1.sub, e.pageX);
+    var $dragLeft = $dragX.derive(utils_1.add, $sliderLeft.get());
+    $$DragLeft.set($dragLeft);
+});
+window.addEventListener('mouseup', function () {
+    $$DragLeft.set(null);
 });
 window.addEventListener('load', function () {
     document.body.appendChild(header);
