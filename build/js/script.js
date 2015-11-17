@@ -1204,6 +1204,7 @@ var $MouseX = derivable_1.atom(0);
 window.addEventListener('mousemove', function (e) {
     $MouseX.set(e.pageX);
 });
+var $ColumnOffset = derivable_1.atom(0);
 var header = utils_1.React.createElement("div", {"className": 'header'});
 var slider = utils_1.React.createElement("div", {"className": 'slider'});
 var CELL_WIDTH = 100;
@@ -1212,12 +1213,21 @@ var SLIDER_BREADTH = 10;
 var $numColumns = $WindowWidth.derive(utils_1.divide, CELL_WIDTH)
     .derive(Math.floor);
 function makeCell(index) {
-    var cell = utils_1.React.createElement("div", {"className": 'header-cell'}, index);
+    var cell = utils_1.React.createElement("div", {"className": 'header-cell'});
     utils_1.assign(cell.style, {
         width: utils_1.px(CELL_WIDTH),
         height: utils_1.px(CELL_HEIGHT),
         left: utils_1.px(index * CELL_WIDTH),
         top: utils_1.px(0)
+    });
+    var $offsetIndex = $ColumnOffset.derive(utils_1.add, index);
+    var reactor = $offsetIndex.react(function (i) { return cell.innerText = i; });
+    $numColumns.react(function (n) {
+        if (n <= index) {
+            cell.remove();
+            reactor.stop();
+            this.stop();
+        }
     });
     return cell;
 }
@@ -1228,15 +1238,21 @@ $numColumns.react(function (n) {
             header.appendChild(makeCell(i));
         }
     }
-    else if (len > n) {
-        for (var i = len; i > n; i--) {
-            cells[i - 1].remove();
-        }
-    }
 });
 window.addEventListener('load', function () {
     document.body.appendChild(header);
     document.body.appendChild(slider);
+});
+window.addEventListener('keydown', function (e) {
+    console.log(e.keyCode);
+    switch (e.keyCode) {
+        case 39:
+            $ColumnOffset.swap(utils_1.add, 1);
+            break;
+        case 37:
+            $ColumnOffset.swap(utils_1.sub, 1);
+            break;
+    }
 });
 
 },{"./utils":3,"derivable":1}],3:[function(require,module,exports){
