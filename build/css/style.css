@@ -1,0 +1,24 @@
+body {
+  font-family: sans-serif;
+}
+
+.header-cell {
+  border-right: 1px solid black;
+  border-bottom: 1px solid black;
+  position: fixed;
+  text-align: center;
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+.slider {
+  position: fixed;
+  background-color: #888;
+  border-color: #333;
+  box-sizing: border-box;
+}
+.slider:hover {
+  background-color: #555;
+  cursor: pointer;
+  position: fixed;
+}
