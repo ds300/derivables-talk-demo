@@ -1204,7 +1204,7 @@ var $MouseX = derivable_1.atom(0);
 window.addEventListener('mousemove', function (e) {
     $MouseX.set(e.pageX);
 });
-var $ColumnOffset = derivable_1.atom(0);
+var $NoDragColOffset = derivable_1.atom(0);
 var $TotalColumns = derivable_1.atom(20);
 var $$DragLeft = derivable_1.atom(null);
 var header = utils_1.React.createElement("div", {"className": 'header'});
@@ -1217,7 +1217,7 @@ var $numColumns = $WindowWidth.derive(utils_1.divide, CELL_WIDTH)
 var $scale = $WindowWidth.derive(utils_1.divide, $TotalColumns);
 var $sliderLength = $numColumns.derive(utils_1.mul, $scale)
     .derive(Math.round);
-var $noDragSliderLeft = $ColumnOffset.derive(utils_1.mul, $scale)
+var $noDragSliderLeft = $NoDragColOffset.derive(utils_1.mul, $scale)
     .derive(Math.round);
 var $dragSliderLeft = $$DragLeft.mDerive(function ($left) { return $left.get(); });
 var $sliderLeft = $dragSliderLeft.mOr($noDragSliderLeft);
@@ -1231,6 +1231,9 @@ var $sliderStyle = derivable_1.derivation(function () {
     };
 });
 $sliderStyle.react(function (style) { return utils_1.assign(slider.style, style); });
+var $dragColOffset = $dragSliderLeft.mDerive(utils_1.divide, $scale)
+    .mDerive(Math.round);
+var $columnOffset = $dragColOffset.mOr($NoDragColOffset);
 function makeCell(index) {
     var cell = utils_1.React.createElement("div", {"className": 'header-cell'});
     utils_1.assign(cell.style, {
@@ -1239,7 +1242,7 @@ function makeCell(index) {
         left: utils_1.px(index * CELL_WIDTH),
         top: utils_1.px(0)
     });
-    var $offsetIndex = $ColumnOffset.derive(utils_1.add, index);
+    var $offsetIndex = $columnOffset.derive(utils_1.add, index);
     var reactor = $offsetIndex.react(function (i) { return cell.innerText = i; });
     $numColumns.react(function (n) {
         if (n <= index) {
@@ -1266,9 +1269,10 @@ slider.addEventListener('mousedown', function (e) {
     var $dragLeft = $dragX.derive(utils_1.add, $sliderLeft.get());
     $$DragLeft.set($dragLeft);
 });
-window.addEventListener('mouseup', function () {
+window.addEventListener('mouseup', derivable_1.transaction(function () {
+    $NoDragColOffset.set($columnOffset.get());
     $$DragLeft.set(null);
-});
+}));
 window.addEventListener('load', function () {
     document.body.appendChild(header);
     document.body.appendChild(slider);
@@ -1277,10 +1281,10 @@ window.addEventListener('keydown', function (e) {
     console.log(e.keyCode);
     switch (e.keyCode) {
         case 39:
-            $ColumnOffset.swap(utils_1.add, 1);
+            $NoDragColOffset.swap(utils_1.add, 1);
             break;
         case 37:
-            $ColumnOffset.swap(utils_1.sub, 1);
+            $NoDragColOffset.swap(utils_1.sub, 1);
             break;
         case 38:
             $TotalColumns.swap(utils_1.add, 1);

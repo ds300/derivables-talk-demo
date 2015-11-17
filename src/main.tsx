@@ -23,7 +23,7 @@ window.addEventListener('mousemove', e => {
 });
 
 // the logical index of the leftmost column on screen
-const $ColumnOffset = atom(0)
+const $NoDragColOffset = atom(0)
 
 // the total number of columns in our spreadsheet.
 // need to know to make slider size proportional
@@ -50,8 +50,8 @@ const $scale = $WindowWidth.derive(divide, $TotalColumns);
 const $sliderLength = $numColumns.derive(mul, $scale)
                                  .derive(Math.round);
 // left means 'leftmost point', x position, etc.
-const $noDragSliderLeft = $ColumnOffset.derive(mul, $scale)
-                                       .derive(Math.round);
+const $noDragSliderLeft = $NoDragColOffset.derive(mul, $scale)
+                                          .derive(Math.round);
 // just unpack the nexted derivable to get at the number
 // number inside.
 const $dragSliderLeft = $$DragLeft.mDerive($left => $left.get());
@@ -74,6 +74,10 @@ const $sliderStyle = derivation(() => {
 
 $sliderStyle.react(style => assign(slider.style, style));
 
+const $dragColOffset = $dragSliderLeft.mDerive(divide, $scale)
+                                      .mDerive(Math.round);
+
+const $columnOffset = $dragColOffset.mOr($NoDragColOffset);
 
 // create a cell for a particular index in [0..numColumns]
 function makeCell (index) {
@@ -88,7 +92,7 @@ function makeCell (index) {
 
   // create offset version of our index and update the
   // text content of the cell when it changes
-  const $offsetIndex = $ColumnOffset.derive(add, index);
+  const $offsetIndex = $columnOffset.derive(add, index);
   const reactor = $offsetIndex.react(i => cell.innerText = i);
 
   // stop the reactor and remove the cell when no longer
@@ -137,9 +141,10 @@ slider.addEventListener('mousedown', e => {
   $$DragLeft.set($dragLeft);
 });
 
-window.addEventListener('mouseup', () => {
+window.addEventListener('mouseup', transaction(() => {
+  $NoDragColOffset.set($columnOffset.get());
   $$DragLeft.set(null);
-});
+}));
 
 window.addEventListener('load', () => {
   document.body.appendChild(header)
@@ -150,8 +155,8 @@ window.addEventListener('load', () => {
 window.addEventListener('keydown', e => {
   console.log(e.keyCode);
   switch (e.keyCode) {
-    case 39: $ColumnOffset.swap(add, 1); break;
-    case 37: $ColumnOffset.swap(sub, 1); break;
+    case 39: $NoDragColOffset.swap(add, 1); break;
+    case 37: $NoDragColOffset.swap(sub, 1); break;
     case 38: $TotalColumns.swap(add, 1); break;
     case 40: $TotalColumns.swap(sub, 1); break;
   }
