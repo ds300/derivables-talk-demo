@@ -1220,7 +1220,11 @@ var $sliderLength = $numColumns.derive(utils_1.mul, $scale)
 var $noDragSliderLeft = $NoDragColOffset.derive(utils_1.mul, $scale)
     .derive(Math.round);
 var $dragSliderLeft = $$DragLeft.mDerive(function ($left) { return $left.get(); });
-var $sliderLeft = $dragSliderLeft.mOr($noDragSliderLeft);
+var $maxSliderLeft = $WindowWidth.derive(utils_1.sub, $sliderLength);
+var $sliderLeft = $dragSliderLeft
+    .mOr($noDragSliderLeft)
+    .derive(Math.min, $maxSliderLeft)
+    .derive(Math.max, 0);
 var $sliderTop = $WindowHeight.derive(utils_1.sub, SLIDER_BREADTH);
 var $sliderStyle = derivable_1.derivation(function () {
     return {
@@ -1231,7 +1235,7 @@ var $sliderStyle = derivable_1.derivation(function () {
     };
 });
 $sliderStyle.react(function (style) { return utils_1.assign(slider.style, style); });
-var $dragColOffset = $dragSliderLeft.mDerive(utils_1.divide, $scale)
+var $dragColOffset = $sliderLeft.mDerive(utils_1.divide, $scale)
     .mDerive(Math.round);
 var $columnOffset = $dragColOffset.mOr($NoDragColOffset);
 function makeCell(index) {
@@ -1281,10 +1285,14 @@ window.addEventListener('keydown', function (e) {
     console.log(e.keyCode);
     switch (e.keyCode) {
         case 39:
-            $NoDragColOffset.swap(utils_1.add, 1);
+            $NoDragColOffset.swap(function (offset) {
+                return Math.min(offset + 1, $TotalColumns.get() - $numColumns.get());
+            });
             break;
         case 37:
-            $NoDragColOffset.swap(utils_1.sub, 1);
+            $NoDragColOffset.swap(function (offset) {
+                return Math.max(offset - 1, 0);
+            });
             break;
         case 38:
             $TotalColumns.swap(utils_1.add, 1);

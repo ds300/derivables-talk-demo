@@ -57,9 +57,13 @@ const $noDragSliderLeft = $NoDragColOffset.derive(mul, $scale)
 const $dragSliderLeft = $$DragLeft.mDerive($left => $left.get());
 // mDerive means 'derive if not null'
 // like .? operator in c# or coffeescript
-const $sliderLeft = $dragSliderLeft.mOr($noDragSliderLeft);
+const $maxSliderLeft = $WindowWidth.derive(sub, $sliderLength);
+const $sliderLeft = $dragSliderLeft
+  .mOr($noDragSliderLeft)
 // mOr means 'if the thing on the left is null, use
 // the thing on the right'
+  .derive(Math.min, $maxSliderLeft)
+  .derive(Math.max, 0);
 
 const $sliderTop = $WindowHeight.derive(sub, SLIDER_BREADTH);
 
@@ -74,8 +78,8 @@ const $sliderStyle = derivation(() => {
 
 $sliderStyle.react(style => assign(slider.style, style));
 
-const $dragColOffset = $dragSliderLeft.mDerive(divide, $scale)
-                                      .mDerive(Math.round);
+const $dragColOffset = $sliderLeft.mDerive(divide, $scale)
+                                  .mDerive(Math.round);
 
 const $columnOffset = $dragColOffset.mOr($NoDragColOffset);
 
@@ -155,8 +159,20 @@ window.addEventListener('load', () => {
 window.addEventListener('keydown', e => {
   console.log(e.keyCode);
   switch (e.keyCode) {
-    case 39: $NoDragColOffset.swap(add, 1); break;
-    case 37: $NoDragColOffset.swap(sub, 1); break;
+    case 39:
+      // up
+      $NoDragColOffset.swap(offset => {
+        return Math.min(
+          offset + 1,
+          $TotalColumns.get() - $numColumns.get()
+        );
+      });
+      break;
+    case 37:
+      $NoDragColOffset.swap(offset => {
+        return Math.max(offset - 1, 0);
+      });
+      break;
     case 38: $TotalColumns.swap(add, 1); break;
     case 40: $TotalColumns.swap(sub, 1); break;
   }
