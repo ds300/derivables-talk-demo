@@ -10,9 +10,10 @@ What you're seeing now probably represents the finished
 product, so go back to the first commit and do the
 following:
 
-    npm install -g grunt-cli
+    npm install -g grunt-cli typescript
     npm install
     open build/index.html
+    tsc
     grunt
 
 - Quick look at `src/utils.ts`
